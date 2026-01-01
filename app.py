@@ -9,12 +9,15 @@ load_dotenv()
 app = Flask(__name__)
 
 # ---------------- MAIL CONFIG ---------------- #
-app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
-app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
+app.config.update(
+    MAIL_SERVER=os.getenv("MAIL_SERVER"),
+    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
+    MAIL_USE_TLS=True,
+    MAIL_USE_SSL=False,
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+    MAIL_DEFAULT_SENDER=os.getenv("MAIL_USERNAME"),
+)
 
 mail = Mail(app)
 
@@ -42,9 +45,9 @@ def contact():
 # ---------------- CONTACT FORM SUBMIT ---------------- #
 @app.route("/submit-contact", methods=["POST"])
 def submit_contact():
-    try:
-        data = request.form
+    data = request.form
 
+    try:
         msg_body = f"""
 New Event Inquiry Received 🎉
 
@@ -58,23 +61,28 @@ Guests: {data.get('guestCount')}
 
 Description:
 {data.get('description')}
-        """
+"""
 
         msg = Message(
             subject="📩 New Wedding Inquiry - Parampara",
             recipients=[os.getenv("MAIL_RECEIVER")],
-            body=msg_body
+            body=msg_body,
         )
 
         mail.send(msg)
+        print("✅ Email sent successfully")
 
         return jsonify({"success": True}), 200
 
     except Exception as e:
-        print("Mail Error:", e)
-        return jsonify({"success": False}), 500
+        print("❌ Mail Error:", e)   # THIS WILL SHOW IN RENDER LOGS
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
 
