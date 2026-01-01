@@ -1,4 +1,6 @@
-Flask
-Flask-Mail
-python-dotenv
+flask
 gunicorn
+pymongo
+dnspython
+werkzeug
+python-dotenv
