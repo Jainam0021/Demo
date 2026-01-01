@@ -1,6 +1,9 @@
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
 import os
 from flask import Flask, render_template, request, jsonify
-from flask_mail import Mail, Message
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -19,7 +22,7 @@ app.config.update(
     MAIL_DEFAULT_SENDER=os.getenv("MAIL_USERNAME"),
 )
 
-mail = Mail(app)
+
 
 # ---------------- ROUTES ---------------- #
 @app.route("/")
@@ -47,8 +50,11 @@ def contact():
 def submit_contact():
     data = request.form
 
-    try:
-        msg_body = f"""
+    message = Mail(
+        from_email=os.getenv("SENDGRID_FROM_EMAIL"),
+        to_emails=os.getenv("SENDGRID_TO_EMAIL"),
+        subject="📩 New Wedding Inquiry - Parampara",
+        plain_text_content=f"""
 New Event Inquiry Received 🎉
 
 Full Name: {data.get('fullName')}
@@ -62,27 +68,21 @@ Guests: {data.get('guestCount')}
 Description:
 {data.get('description')}
 """
+    )
 
-        msg = Message(
-            subject="📩 New Wedding Inquiry - Parampara",
-            recipients=[os.getenv("MAIL_RECEIVER")],
-            body=msg_body,
-        )
-
-        mail.send(msg)
-        print("✅ Email sent successfully")
-
+    try:
+        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        sg.send(message)
+        print("✅ Email sent via SendGrid")
         return jsonify({"success": True}), 200
 
     except Exception as e:
-        print("❌ Mail Error:", e)   # THIS WILL SHOW IN RENDER LOGS
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+        print("❌ SendGrid Error:", e)
+        return jsonify({"success": False}), 500
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
 
 
