@@ -1,6 +1,4 @@
-flask
-gunicorn
-pymongo
-dnspython
-werkzeug
-python-dotenv
+Flask==2.3.5
+Flask-Mail==0.9.1
+python-dotenv==1.0.0
+gunicorn==21.2.0
