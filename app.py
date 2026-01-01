@@ -1,28 +1,12 @@
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-
 import os
 from flask import Flask, render_template, request, jsonify
-
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-
-# ---------------- MAIL CONFIG ---------------- #
-app.config.update(
-    MAIL_SERVER=os.getenv("MAIL_SERVER"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
-    MAIL_USE_TLS=True,
-    MAIL_USE_SSL=False,
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_DEFAULT_SENDER=os.getenv("MAIL_USERNAME"),
-)
-
-
 
 # ---------------- ROUTES ---------------- #
 @app.route("/")
@@ -50,11 +34,12 @@ def contact():
 def submit_contact():
     data = request.form
 
-    message = Mail(
-        from_email=os.getenv("SENDGRID_FROM_EMAIL"),
-        to_emails=os.getenv("SENDGRID_TO_EMAIL"),
-        subject="📩 New Wedding Inquiry - Parampara",
-        plain_text_content=f"""
+    try:
+        message = Mail(
+            from_email=os.getenv("SENDGRID_FROM_EMAIL"),
+            to_emails=os.getenv("SENDGRID_TO_EMAIL"),
+            subject="📩 New Wedding Inquiry - Parampara",
+            plain_text_content=f"""
 New Event Inquiry Received 🎉
 
 Full Name: {data.get('fullName')}
@@ -68,11 +53,11 @@ Guests: {data.get('guestCount')}
 Description:
 {data.get('description')}
 """
-    )
+        )
 
-    try:
         sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         sg.send(message)
+
         print("✅ Email sent via SendGrid")
         return jsonify({"success": True}), 200
 
@@ -83,6 +68,3 @@ Description:
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-
-
-
